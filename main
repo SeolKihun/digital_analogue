@@ -1,0 +1,811 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>micro:bit 아날로그 입력 (ADC) 이해하기</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Malgun Gothic', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 2.2em;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 40px;
+            font-size: 1.1em;
+        }
+
+        .section {
+            margin-bottom: 40px;
+            padding: 30px;
+            background: #f8f9fa;
+            border-radius: 15px;
+            border-left: 5px solid #667eea;
+        }
+
+        .section h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+        }
+
+        .comparison {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .signal-box {
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .digital {
+            background: #e3f2fd;
+            border: 3px solid #2196F3;
+        }
+
+        .analog {
+            background: #fff3e0;
+            border: 3px solid #ff9800;
+        }
+
+        .signal-box h3 {
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+
+        .signal-visual {
+            height: 100px;
+            margin: 15px 0;
+            position: relative;
+        }
+
+        .interactive-section {
+            background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%);
+            padding: 30px;
+            border-radius: 15px;
+            margin-top: 30px;
+        }
+
+        .solar-panel {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .solar-icon {
+            font-size: 80px;
+            margin: 20px 0;
+        }
+
+        .slider-container {
+            margin: 30px 0;
+        }
+
+        .slider-container label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+            color: #333;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            height: 10px;
+            border-radius: 5px;
+            background: #ddd;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            background: #667eea;
+            cursor: pointer;
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            background: #667eea;
+            cursor: pointer;
+        }
+
+        .display-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin: 30px 0;
+        }
+
+        .display-box {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .display-box h4 {
+            color: #666;
+            font-size: 0.9em;
+            margin-bottom: 10px;
+        }
+
+        .display-value {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: #667eea;
+            margin: 10px 0;
+        }
+
+        .display-unit {
+            font-size: 0.9em;
+            color: #999;
+        }
+
+        .calculation-steps {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+
+        .step {
+            padding: 15px;
+            margin: 10px 0;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+
+        .step-number {
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            background: #667eea;
+            color: white;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 30px;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+
+        .formula {
+            font-family: 'Courier New', monospace;
+            background: #e8eaf6;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            font-size: 1.1em;
+            text-align: center;
+        }
+
+        .highlight {
+            background: #fff59d;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-weight: bold;
+        }
+
+        .graph-container {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+
+        canvas {
+            width: 100%;
+            height: 300px;
+        }
+
+        .pin-diagram {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 30px;
+            margin: 30px 0;
+            flex-wrap: wrap;
+        }
+
+        .pin {
+            padding: 15px 25px;
+            background: #4caf50;
+            color: white;
+            border-radius: 10px;
+            font-weight: bold;
+            font-size: 1.2em;
+        }
+
+        .arrow {
+            font-size: 2em;
+            color: #666;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .pulsing {
+            animation: pulse 2s infinite;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔬 micro:bit 아날로그 입력 (ADC) 이해하기</h1>
+        <p class="subtitle">빛의 세기를 숫자로 바꾸는 마법! ✨</p>
+
+        <!-- 디지털 vs 아날로그 비교 -->
+        <div class="section">
+            <h2>📊 1단계: 디지털 신호 vs 아날로그 신호</h2>
+            <div class="comparison">
+                <div class="signal-box digital">
+                    <h3>⚡ 디지털 신호</h3>
+                    <p><strong>0 또는 1</strong></p>
+                    <p>LOW (0V) / HIGH (3.3V)</p>
+                    <div class="signal-visual">
+                        <svg width="100%" height="100">
+                            <line x1="0" y1="80" x2="80" y2="80" stroke="#2196F3" stroke-width="3"/>
+                            <line x1="80" y1="80" x2="80" y2="20" stroke="#2196F3" stroke-width="3"/>
+                            <line x1="80" y1="20" x2="160" y2="20" stroke="#2196F3" stroke-width="3"/>
+                            <line x1="160" y1="20" x2="160" y2="80" stroke="#2196F3" stroke-width="3"/>
+                            <line x1="160" y1="80" x2="240" y2="80" stroke="#2196F3" stroke-width="3"/>
+                            <text x="10" y="95" font-size="12" fill="#666">0</text>
+                            <text x="90" y="15" font-size="12" fill="#666">1</text>
+                            <text x="170" y="95" font-size="12" fill="#666">0</text>
+                        </svg>
+                    </div>
+                    <p style="font-size: 0.9em; color: #666;">스위치 ON/OFF처럼 둘 중 하나</p>
+                </div>
+
+                <div class="signal-box analog">
+                    <h3>🌊 아날로그 신호</h3>
+                    <p><strong>0 ~ 3.3V 사이 연속값</strong></p>
+                    <p>빛, 온도, 전압 등</p>
+                    <div class="signal-visual">
+                        <svg width="100%" height="100">
+                            <path d="M 0 80 Q 60 50, 120 60 T 240 50" stroke="#ff9800" stroke-width="3" fill="none"/>
+                        </svg>
+                    </div>
+                    <p style="font-size: 0.9em; color: #666;">볼륨 조절처럼 부드러운 변화</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- micro:bit 핀 설명 -->
+        <div class="section">
+            <h2>🔌 2단계: micro:bit의 아날로그 입력 핀</h2>
+            <div class="pin-diagram">
+                <div class="pin">P0</div>
+                <div class="pin">P1</div>
+                <div class="pin">P2</div>
+            </div>
+            <p style="text-align: center; font-size: 1.1em; margin-top: 20px;">
+                <strong>이 핀들은 아날로그 신호를 읽을 수 있어요!</strong><br>
+                <span style="color: #666;">빛, 온도, 전압처럼 "연속적인 변화"를 측정할 때 사용합니다.</span>
+            </p>
+        </div>
+
+        <!-- 왜 1024/1023인가? -->
+        <div class="section" style="background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%); border-left: 5px solid #ff9800;">
+            <h2>🤔 왜 1024로 나누고, 왜 0~1023일까?</h2>
+            
+            <div style="background: white; padding: 25px; border-radius: 10px; margin-bottom: 20px;">
+                <h3 style="color: #ff9800; margin-bottom: 15px;">💡 핵심 개념: 비트(bit)</h3>
+                <p style="font-size: 1.1em; line-height: 1.8;">
+                    컴퓨터는 <strong>0과 1</strong>로만 값을 처리해요! 🖥️<br>
+                    그래서 아날로그 전압(연속적인 값)을 <strong>여러 단계로 쪼개서</strong> 숫자로 바꿔야 해요.
+                </p>
+            </div>
+
+            <div style="background: white; padding: 25px; border-radius: 10px; margin-bottom: 20px;">
+                <h3 style="color: #ff9800; margin-bottom: 15px;">📦 10비트 = 10개의 방 배정</h3>
+                
+                <div style="background: #fff9e6; padding: 20px; border-radius: 10px; margin-bottom: 20px; border: 2px dashed #ff9800;">
+                    <p style="text-align: center; font-size: 1.1em; margin-bottom: 15px;">
+                        <strong>👆 방을 클릭해서 0과 1을 바꿔보세요!</strong>
+                    </p>
+                    
+                    <div id="bitBoxes" style="display: grid; grid-template-columns: repeat(10, 1fr); gap: 8px; margin: 20px 0;">
+                        <!-- JavaScript로 생성됩니다 -->
+                    </div>
+                    
+                    <div style="text-align: center; margin-top: 20px;">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 10px;">
+                            <div style="background: #fff3e0; padding: 15px; border-radius: 10px; border: 2px solid #ff9800;">
+                                <p style="font-size: 0.9em; color: #666; margin-bottom: 5px;">🔢 조합 번호 (몇 번째?)</p>
+                                <div style="font-size: 2.5em; color: #ff9800; font-weight: bold;" id="combinationNumber">691</div>
+                                <p style="font-size: 0.85em; color: #999; margin-top: 5px;">/ 1024가지 중</p>
+                                <p style="font-size: 0.8em; color: #e65100; margin-top: 5px; font-weight: bold;">1번째~1024번째</p>
+                            </div>
+                            <div style="background: #e8f5e9; padding: 15px; border-radius: 10px; border: 2px solid #4caf50;">
+                                <p style="font-size: 0.9em; color: #666; margin-bottom: 5px;">📊 ADC 값 (실제 숫자)</p>
+                                <div style="font-size: 2.5em; color: #4caf50; font-weight: bold;" id="decimalValue">690</div>
+                                <p style="font-size: 0.85em; color: #999; margin-top: 5px;">이진수→10진수 변환</p>
+                                <p style="font-size: 0.8em; color: #2e7d32; margin-top: 5px; font-weight: bold;">0~1023 범위</p>
+                            </div>
+                        </div>
+                        <button onclick="randomBits()" style="background: #ff9800; color: white; border: none; padding: 12px 25px; border-radius: 8px; font-size: 1em; cursor: pointer; font-weight: bold; margin: 5px;">
+                            🎲 랜덤 조합 만들기
+                        </button>
+                        <button onclick="resetBits()" style="background: #666; color: white; border: none; padding: 12px 25px; border-radius: 8px; font-size: 1em; cursor: pointer; font-weight: bold; margin: 5px;">
+                            🔄 모두 0으로
+                        </button>
+                        <button onclick="setAllOnes()" style="background: #4caf50; color: white; border: none; padding: 12px 25px; border-radius: 8px; font-size: 1em; cursor: pointer; font-weight: bold; margin: 5px;">
+                            ⚡ 모두 1로
+                        </button>
+                    </div>
+                </div>
+                
+                <p style="text-align: center; font-size: 1.1em; margin: 20px 0;">
+                    <strong>10개의 방(비트)</strong>에 각각 0 또는 1을 넣을 수 있어요!
+                </p>
+
+                <div class="formula" style="background: #fff3e0;">
+                    10비트 = 2¹⁰ = 2 × 2 × 2 × 2 × 2 × 2 × 2 × 2 × 2 × 2 = <span class="highlight">1024</span>
+                </div>
+
+                <p style="font-size: 1.1em; line-height: 1.8; margin-top: 20px;">
+                    🎯 <strong>1024가지 다른 조합</strong>을 만들 수 있어요!<br>
+                    그래서 전압을 <span class="highlight">1024단계</span>로 쪼개서 표현합니다.
+                </p>
+                
+                <div style="background: #e8f5e9; padding: 15px; border-radius: 10px; margin-top: 20px;">
+                    <p style="font-size: 1em; color: #2e7d32;">
+                        <strong>💡 두 개념의 차이:</strong><br><br>
+                        
+                        <strong>🔢 조합 번호 (1~1024):</strong><br>
+                        • "몇 가지 경우가 있나?" → <span style="background: #fff59d; padding: 2px 5px; border-radius: 3px;">1024가지</span><br>
+                        • "이게 몇 번째 조합인가?" → <span style="background: #fff59d; padding: 2px 5px; border-radius: 3px;">1번째~1024번째</span><br>
+                        • 모든 방이 0이면 → <strong>1번째 조합</strong> (메모리 한 자리 차지!)<br>
+                        • 모든 방이 1이면 → <strong>1024번째 조합</strong><br><br>
+                        
+                        <strong>📊 ADC 값 (0~1023):</strong><br>
+                        • "실제 측정된 숫자는?" → <span style="background: #b3e5fc; padding: 2px 5px; border-radius: 3px;">0~1023</span><br>
+                        • 이진수를 10진수로 바꾼 값<br>
+                        • 모든 방이 0이면 → <strong>ADC 값 0</strong> (0V를 의미)<br>
+                        • 모든 방이 1이면 → <strong>ADC 값 1023</strong> (3.3V를 의미)<br>
+                        • micro:bit가 실제로 읽는 값!
+                    </p>
+                </div>
+            </div>
+
+            <div style="background: white; padding: 25px; border-radius: 10px;">
+                <h3 style="color: #ff9800; margin-bottom: 15px;">🔢 조합의 수 vs ADC 값</h3>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 20px 0;">
+                    <div style="background: #fff3e0; padding: 20px; border-radius: 10px; text-align: center; border: 3px solid #ff9800;">
+                        <div style="font-size: 3em; margin: 10px 0;">🔢</div>
+                        <p style="font-size: 1.2em;"><strong>조합의 수</strong></p>
+                        <div style="font-size: 2.5em; color: #ff9800; font-weight: bold; margin: 10px 0;">1024가지</div>
+                        <p style="color: #666; line-height: 1.6;">
+                            10비트로 만들 수 있는<br>
+                            <strong>경우의 수</strong><br>
+                            1번째 ~ 1024번째
+                        </p>
+                    </div>
+                    <div style="background: #e8f5e9; padding: 20px; border-radius: 10px; text-align: center; border: 3px solid #4caf50;">
+                        <div style="font-size: 3em; margin: 10px 0;">📊</div>
+                        <p style="font-size: 1.2em;"><strong>ADC 값 범위</strong></p>
+                        <div style="font-size: 2.5em; color: #4caf50; font-weight: bold; margin: 10px 0;">0~1023</div>
+                        <p style="color: #666; line-height: 1.6;">
+                            micro:bit가 실제로<br>
+                            <strong>읽는 숫자</strong><br>
+                            0부터 시작!
+                        </p>
+                    </div>
+                </div>
+
+                <div style="background: #fff3e0; padding: 20px; border-radius: 10px; margin-top: 20px;">
+                    <p style="font-size: 1.15em; line-height: 1.8;">
+                        <strong>✅ 왜 다를까?</strong><br><br>
+                        
+                        <strong>🔢 조합을 셀 때:</strong><br>
+                        "몇 가지 경우가 있나?"를 세는 거라서 <strong>1번째부터 1024번째</strong>까지 세요.<br>
+                        → 좌석이 10개면 1번 좌석, 2번 좌석, ..., 10번 좌석처럼!<br><br>
+                        
+                        <strong>📊 ADC 값을 읽을 때:</strong><br>
+                        컴퓨터는 항상 <strong>0부터</strong> 세기 시작해요!<br>
+                        0000000000 = 0, 0000000001 = 1, ..., 1111111111 = 1023<br>
+                        → 배열 인덱스가 0번부터 시작하는 것처럼!<br><br>
+                        
+                        <strong>💡 그래서:</strong><br>
+                        • <strong>조합은 1024가지</strong> 있지만,<br>
+                        • <strong>실제 값은 0~1023</strong> 범위입니다!
+                    </p>
+                </div>
+            </div>
+
+            <div style="background: #4caf50; color: white; padding: 20px; border-radius: 10px; margin-top: 20px;">
+                <h3 style="margin-bottom: 15px;">💡 그래서 결론은?</h3>
+                <p style="font-size: 1.15em; line-height: 1.8;">
+                    • micro:bit는 전압을 <strong>1024가지 조합</strong>으로 표현해요<br>
+                    • 하지만 실제 ADC 값은 <strong>0부터 시작</strong>하니까 <strong>0~1023</strong><br>
+                    • 전압 계산할 때: <strong>(ADC값 ÷ 1023) × 3.3</strong>을 해요!<br>
+                    • 왜 1023? → 최댓값 1023이 3.3V를 의미하기 때문!<br>
+                    • 1024로 나눠도 오차는 약 0.3%로 거의 비슷해요
+                </p>
+            </div>
+        </div>
+
+        <!-- 인터랙티브 시뮬레이션 -->
+        <div class="section">
+            <h2>⚡ 3단계: ADC (아날로그-디지털 변환) 체험하기</h2>
+            
+            <div class="interactive-section">
+                <div class="solar-panel">
+                    <div class="solar-icon pulsing">☀️</div>
+                    <h3>태양광 패널에 빛을 비춰보세요!</h3>
+                </div>
+
+                <div class="slider-container">
+                    <label for="voltage">🔆 빛의 세기 조절 (전압 변화)</label>
+                    <input type="range" id="voltage" min="0" max="3.3" step="0.1" value="1.65">
+                </div>
+
+                <div class="display-grid">
+                    <div class="display-box">
+                        <h4>📥 입력 전압</h4>
+                        <div class="display-value" id="voltageDisplay">1.65</div>
+                        <div class="display-unit">V (볼트)</div>
+                    </div>
+                    <div class="display-box">
+                        <h4>🔄 ADC 변환값</h4>
+                        <div class="display-value" id="adcDisplay">512</div>
+                        <div class="display-unit">(0 ~ 1023)</div>
+                    </div>
+                    <div class="display-box">
+                        <h4>📤 역계산 전압</h4>
+                        <div class="display-value" id="reverseDisplay">1.65</div>
+                        <div class="display-unit">V (볼트)</div>
+                    </div>
+                </div>
+
+                <div class="calculation-steps">
+                    <h3 style="margin-bottom: 20px;">📐 계산 과정 (핵심!)</h3>
+                    
+                    <div class="step">
+                        <span class="step-number">1</span>
+                        <strong>micro:bit가 전압을 읽습니다</strong>
+                        <div class="formula">
+                            실제 전압 = <span class="highlight" id="step1Voltage">1.65</span> V
+                        </div>
+                    </div>
+
+                    <div class="step">
+                        <span class="step-number">2</span>
+                        <strong>ADC가 0~3.3V를 0~1023 숫자로 변환합니다</strong>
+                        <div class="formula">
+                            ADC 값 = (전압 ÷ 3.3) × 1023<br>
+                            = (<span class="highlight" id="step2Voltage">1.65</span> ÷ 3.3) × 1023<br>
+                            = <span class="highlight" id="step2Result">512</span>
+                        </div>
+                        <p style="margin-top: 10px; color: #666; font-size: 0.95em;">
+                            💡 <strong>왜 1023일까?</strong><br>
+                            ADC는 10비트(2¹⁰ = 1024단계)라서 0~1023 범위입니다!<br>
+                            컴퓨터는 0부터 세니까, 1024개의 단계 = 0번째~1023번째
+                        </p>
+                    </div>
+
+                    <div class="step">
+                        <span class="step-number">3</span>
+                        <strong>읽은 숫자를 다시 전압으로 바꾸려면? (역계산)</strong>
+                        <div class="formula">
+                            실제 전압 = (ADC 값 ÷ 1023) × 3.3<br>
+                            = (<span class="highlight" id="step3ADC">512</span> ÷ 1023) × 3.3<br>
+                            = <span class="highlight" id="step3Result">1.65</span> V
+                        </div>
+                        <p style="margin-top: 10px; color: #666; font-size: 0.95em;">
+                            🎯 <strong>왜 1024가 아니라 1023으로 나눌까?</strong><br>
+                            • 전압을 1024단계로 쪼갰지만, 범위는 0~1023 (총 1024개)<br>
+                            • 최댓값 1023이 3.3V를 의미하니까 1023으로 나눠야 정확해요<br>
+                            • 만약 1024로 나누면? 1023을 읽었을 때 3.3V가 안 나와요!<br>
+                            <br>
+                            ⚡ <strong>참고:</strong> 실제로는 ÷1024를 써도 오차가 0.3% 정도라 큰 차이 없어요
+                        </p>
+                    </div>
+                </div>
+
+                <div class="graph-container">
+                    <h3 style="margin-bottom: 15px;">📈 전압과 ADC 값의 관계 그래프</h3>
+                    <canvas id="graph"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- 실전 예제 -->
+        <div class="section">
+            <h2>💡 4단계: 실전 예제</h2>
+            <div style="background: white; padding: 20px; border-radius: 10px;">
+                <h3 style="margin-bottom: 15px;">태양광 패널 → micro:bit P0 핀</h3>
+                <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 10px 0;">
+                    <p><strong>상황:</strong> 밝은 빛을 받아서 2.5V 전압이 발생했다면?</p>
+                    <div class="formula" style="margin: 15px 0;">
+                        ADC 값 = (2.5 ÷ 3.3) × 1023 = 약 <span class="highlight">775</span>
+                    </div>
+                    <p><strong>micro:bit 화면에 775가 표시됩니다!</strong></p>
+                </div>
+                
+                <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 10px 0;">
+                    <p><strong>역계산:</strong> micro:bit가 775를 읽었다면 실제 전압은?</p>
+                    <div class="formula" style="margin: 15px 0;">
+                        실제 전압 = (775 ÷ 1023) × 3.3 = 약 <span class="highlight">2.5</span> V
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 요약 -->
+        <div class="section" style="background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%); border-left: 5px solid #4caf50;">
+            <h2>✅ 핵심 정리</h2>
+            <div style="font-size: 1.1em; line-height: 1.8;">
+                <p>✓ <strong>P0, P1, P2</strong>는 아날로그 입력 핀입니다</p>
+                <p>✓ 아날로그 신호는 <strong>0~3.3V 연속 값</strong>입니다</p>
+                <p>✓ ADC는 <strong>10비트 = 2¹⁰</strong>이므로</p>
+                <p style="padding-left: 20px;">→ 조합의 수: <strong>1024가지</strong> (1번째~1024번째)</p>
+                <p style="padding-left: 20px;">→ ADC 값 범위: <strong>0~1023</strong> (실제 측정값)</p>
+                <p>✓ <strong>1023으로 나누는 이유</strong>: 최댓값 1023이 3.3V를 의미하기 때문!</p>
+                <p>✓ 계산식: <span class="highlight">(ADC 값 ÷ 1023) × 3.3 = 실제 전압(V)</span></p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 비트 배열 초기화
+        let bits = [0, 1, 0, 1, 1, 0, 1, 0, 1, 1]; // 초기값 (이미지와 동일)
+        
+        // 비트 박스 생성
+        function createBitBoxes() {
+            const container = document.getElementById('bitBoxes');
+            container.innerHTML = '';
+            
+            bits.forEach((bit, index) => {
+                const box = document.createElement('div');
+                box.className = 'bit-box';
+                box.textContent = bit;
+                box.onclick = () => toggleBit(index);
+                box.style.cssText = `
+                    background: ${bit === 1 ? '#667eea' : '#e0e0e0'};
+                    color: ${bit === 1 ? 'white' : '#666'};
+                    padding: 20px 10px;
+                    text-align: center;
+                    border-radius: 8px;
+                    font-weight: bold;
+                    font-size: 1.5em;
+                    cursor: pointer;
+                    transition: all 0.3s ease;
+                    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+                `;
+                box.onmouseover = () => {
+                    box.style.transform = 'scale(1.1)';
+                };
+                box.onmouseout = () => {
+                    box.style.transform = 'scale(1)';
+                };
+                container.appendChild(box);
+            });
+            
+            updateDecimalValue();
+        }
+        
+        // 비트 토글
+        function toggleBit(index) {
+            bits[index] = bits[index] === 0 ? 1 : 0;
+            createBitBoxes();
+        }
+        
+        // 10진수 값 계산 (이진수 → 10진수)
+        function updateDecimalValue() {
+            let decimal = 0;
+            for (let i = 0; i < bits.length; i++) {
+                decimal += bits[i] * Math.pow(2, bits.length - 1 - i);
+            }
+            // ADC 값 (0~1023)
+            document.getElementById('decimalValue').textContent = decimal;
+            // 조합 번호 (1~1024)
+            document.getElementById('combinationNumber').textContent = decimal + 1;
+        }
+        
+        // 랜덤 비트 생성
+        function randomBits() {
+            bits = Array.from({length: 10}, () => Math.random() > 0.5 ? 1 : 0);
+            createBitBoxes();
+        }
+        
+        // 모두 0으로
+        function resetBits() {
+            bits = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+            createBitBoxes();
+        }
+        
+        // 모두 1로
+        function setAllOnes() {
+            bits = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1];
+            createBitBoxes();
+        }
+        
+        // 초기화
+        window.addEventListener('load', () => {
+            createBitBoxes();
+        });
+
+        // 기존 코드
+        const voltageSlider = document.getElementById('voltage');
+        const voltageDisplay = document.getElementById('voltageDisplay');
+        const adcDisplay = document.getElementById('adcDisplay');
+        const reverseDisplay = document.getElementById('reverseDisplay');
+        
+        const step1Voltage = document.getElementById('step1Voltage');
+        const step2Voltage = document.getElementById('step2Voltage');
+        const step2Result = document.getElementById('step2Result');
+        const step3ADC = document.getElementById('step3ADC');
+        const step3Result = document.getElementById('step3Result');
+
+        const canvas = document.getElementById('graph');
+        const ctx = canvas.getContext('2d');
+
+        function drawGraph(currentVoltage, currentADC) {
+            const width = canvas.width = canvas.offsetWidth;
+            const height = canvas.height = 300;
+            
+            ctx.clearRect(0, 0, width, height);
+            
+            // 그리드
+            ctx.strokeStyle = '#e0e0e0';
+            ctx.lineWidth = 1;
+            for (let i = 0; i <= 10; i++) {
+                ctx.beginPath();
+                ctx.moveTo(50, 30 + i * 24);
+                ctx.lineTo(width - 20, 30 + i * 24);
+                ctx.stroke();
+                
+                ctx.beginPath();
+                ctx.moveTo(50 + i * (width - 70) / 10, 30);
+                ctx.lineTo(50 + i * (width - 70) / 10, 270);
+                ctx.stroke();
+            }
+            
+            // 축
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(50, 270);
+            ctx.lineTo(width - 20, 270);
+            ctx.lineTo(width - 30, 265);
+            ctx.moveTo(width - 20, 270);
+            ctx.lineTo(width - 30, 275);
+            ctx.stroke();
+            
+            ctx.beginPath();
+            ctx.moveTo(50, 270);
+            ctx.lineTo(50, 30);
+            ctx.lineTo(45, 40);
+            ctx.moveTo(50, 30);
+            ctx.lineTo(55, 40);
+            ctx.stroke();
+            
+            // 레이블
+            ctx.fillStyle = '#333';
+            ctx.font = 'bold 14px Malgun Gothic';
+            ctx.fillText('전압 (V)', width - 80, 290);
+            ctx.save();
+            ctx.translate(20, 150);
+            ctx.rotate(-Math.PI / 2);
+            ctx.fillText('ADC 값', 0, 0);
+            ctx.restore();
+            
+            // 눈금
+            ctx.font = '12px Malgun Gothic';
+            for (let i = 0; i <= 3; i++) {
+                const x = 50 + i * (width - 70) / 3;
+                ctx.fillText((i * 1.1).toFixed(1), x - 10, 285);
+            }
+            for (let i = 0; i <= 4; i++) {
+                const y = 270 - i * 60;
+                ctx.fillText((i * 256).toString(), 15, y + 5);
+            }
+            
+            // 변환 곡선
+            ctx.strokeStyle = '#667eea';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            for (let v = 0; v <= 3.3; v += 0.01) {
+                const x = 50 + (v / 3.3) * (width - 70);
+                const adc = (v / 3.3) * 1023;
+                const y = 270 - (adc / 1023) * 240;
+                if (v === 0) {
+                    ctx.moveTo(x, y);
+                } else {
+                    ctx.lineTo(x, y);
+                }
+            }
+            ctx.stroke();
+            
+            // 현재 점
+            const x = 50 + (currentVoltage / 3.3) * (width - 70);
+            const y = 270 - (currentADC / 1023) * 240;
+            
+            // 보조선
+            ctx.strokeStyle = '#ff5722';
+            ctx.lineWidth = 2;
+            ctx.setLineDash([5, 5]);
+            ctx.beginPath();
+            ctx.moveTo(50, y);
+            ctx.lineTo(x, y);
+            ctx.lineTo(x, 270);
+            ctx.stroke();
+            ctx.setLineDash([]);
+            
+            // 점
+            ctx.fillStyle = '#ff5722';
+            ctx.beginPath();
+            ctx.arc(x, y, 8, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.strokeStyle = 'white';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+        }
+
+        function updateValues() {
+            const voltage = parseFloat(voltageSlider.value);
+            const adc = Math.round((voltage / 3.3) * 1023);
+            const reverse = ((adc / 1023) * 3.3).toFixed(2);
+            
+            voltageDisplay.textContent = voltage.toFixed(2);
+            adcDisplay.textContent = adc;
+            reverseDisplay.textContent = reverse;
+            
+            step1Voltage.textContent = voltage.toFixed(2);
+            step2Voltage.textContent = voltage.toFixed(2);
+            step2Result.textContent = adc;
+            step3ADC.textContent = adc;
+            step3Result.textContent = reverse;
+            
+            drawGraph(voltage, adc);
+        }
+
+        voltageSlider.addEventListener('input', updateValues);
+        window.addEventListener('load', updateValues);
+        window.addEventListener('resize', () => updateValues());
+    </script>
+</body>
+</html>
